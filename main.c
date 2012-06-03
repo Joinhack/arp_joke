@@ -6,6 +6,7 @@ void arp_send();
 int main(int argc, char **argv) {
 	u_char packet[100];
 	char *eth_dst = "00-02-3f-03-3f-26";
+	char *sip = "192.168.0.1";
 	char errbuff[PCAP_ERRBUF_SIZE];
 	char *data;
 	char *devn, p;
@@ -17,11 +18,18 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 
-	while((p = getopt(argc, argv, "i:")) != -1) {
+	while((p = getopt(argc, argv, "i:e:s:")) != -1) {
 		switch(p) {
 		case 'i':
 			devn = optarg;
 			break;
+		case 'e':
+			eth_dst = optarg;
+			break;
+		case 's':
+			sip = optarg;
+			break;
+
 		default:
 			return -1;
 		}
@@ -54,7 +62,7 @@ int main(int argc, char **argv) {
 	eth_addr_parse(eth_dst,tmp);
 	memcpy(&(arp->arp_sha),tmp,ETHER_ADDR_LEN);
 
-	inet_aton("10.100.0.61",(struct in_addr*)&(arp->arp_spa));
+	inet_aton(sip,(struct in_addr*)&(arp->arp_spa));
 
 	memset(tmp,0,ETHER_ADDR_LEN);
 	eth_addr_parse("ff-ff-ff-ff-ff-ff",tmp);
