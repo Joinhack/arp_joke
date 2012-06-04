@@ -2,14 +2,23 @@
 
 pcap_t *driver;
 u_char *buff;
+int repeat = 0;
+int delay = 1;
 void arp_send();
+
+void usage() {
+	fprintf(stdout, "arp_joke [-i device] [-e ether_dest] [-s source_ip]\n");
+	fprintf(stdout, "[-r repeat] [-d delay]\n");
+	exit(1);
+}
+
 int main(int argc, char **argv) {
 	u_char packet[100];
 	char *eth_dst = "00-02-3f-03-3f-26";
 	char *sip = "192.168.0.1";
 	char errbuff[PCAP_ERRBUF_SIZE];
 	char *data;
-	char *devn, p;
+	char *devn = NULL, p;
 	int i = 0;
 	char tmp[ETHER_ADDR_LEN];
 	struct ARP_HEADER *arp;
@@ -18,7 +27,7 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 
-	while((p = getopt(argc, argv, "i:e:s:")) != -1) {
+	while((p = getopt(argc, argv, "i:e:s:r:d:")) != -1) {
 		switch(p) {
 		case 'i':
 			devn = optarg;
@@ -29,11 +38,19 @@ int main(int argc, char **argv) {
 		case 's':
 			sip = optarg;
 			break;
-
+		case 'r':
+			repeat = atoi(optarg);
+			break;
+		case 'd':
+			delay = atoi(optarg);
+			break;
 		default:
 			return -1;
 		}
 	}
+
+	if(repeat == 0 || delay == 0 || devn == NULL)
+		usage();
 
 	if((driver = pcap_open_live(devn,65535,PCAP_OPENFLAG_PROMISCUOUS,1000,errbuff)) == NULL) {
 		fprintf(stderr,"open a driver error ,reason:%s\n",errbuff);
@@ -74,12 +91,14 @@ int main(int argc, char **argv) {
 }
 
 void arp_send() {
-	while(1) {
+	int i = 0; 
+	for(; i < repeat; i++) {
 		if(pcap_sendpacket(driver, buff, sizeof(struct ether_header) + sizeof(struct ARP_HEADER)) != 0) {
 			fprintf(stderr,"\nError sending the packet: \n", pcap_geterr(driver));
 			return;
 		}
-		sleep(1);
+		fprintf(stdout, "send arp, times %d\n", i+1);
+		sleep(delay);
 	}
 }
 
