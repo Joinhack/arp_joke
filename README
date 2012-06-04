@@ -1,1 +1,7 @@
 This project just for arp joke.
+Ubuntu:
+	$ sudo apt-get install libpcap-dev
+	$ make
+CentOS:
+	$ su - root -c "yum install libpcap-devel"
+	$ make
