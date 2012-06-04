@@ -1,10 +1,6 @@
 #include "main.h"
 
-pcap_t *driver;
-u_char *buff;
-int repeat = 0;
-int delay = 1;
-void arp_send();
+void arp_send(pcap_t *driver, u_char *buff, int repeat, int delay);
 
 void usage() {
 	fprintf(stdout, "arp_joke [-i device] [-e ether_dest] [-s source_ip]\n");
@@ -21,6 +17,10 @@ int main(int argc, char **argv) {
 	char *devn = NULL, p;
 	int i = 0;
 	char tmp[ETHER_ADDR_LEN];
+	pcap_t *driver;
+	u_char *buff;
+	int repeat = 0;
+	int delay = 0;
 	struct ARP_HEADER *arp;
 	if(getuid() != 0) {
 		fprintf(stderr, "please run as root\n");
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if(repeat == 0 || delay == 0 || devn == NULL)
+	if(repeat == 0 || devn == NULL)
 		usage();
 
 	if((driver = pcap_open_live(devn,65535,PCAP_OPENFLAG_PROMISCUOUS,1000,errbuff)) == NULL) {
@@ -86,11 +86,11 @@ int main(int argc, char **argv) {
 	memcpy(&(arp->arp_tha),tmp,ETHER_ADDR_LEN);
 
 	inet_aton("0.0.0.0",(struct in_addr*)&(arp->arp_tpa));
-	arp_send();
+	arp_send(driver, buff, repeat, delay);
 	return 0;
 }
 
-void arp_send() {
+void arp_send(pcap_t *driver, u_char *buff, int repeat, int delay) {
 	int i = 0; 
 	for(; i < repeat; i++) {
 		if(pcap_sendpacket(driver, buff, sizeof(struct ether_header) + sizeof(struct ARP_HEADER)) != 0) {
@@ -98,7 +98,8 @@ void arp_send() {
 			return;
 		}
 		fprintf(stdout, "send arp, times %d\n", i+1);
-		sleep(delay);
+		if(delay)
+			sleep(delay);
 	}
 }
 
