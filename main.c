@@ -60,13 +60,9 @@ int main(int argc, char **argv) {
 	buff = (u_char*)malloc(sizeof(struct ether_header) + sizeof(struct ARP_HEADER));
 	struct ether_header *eh = (struct ether_header*)buff;
 	//dst-host-eth-addr
-	memset(tmp,0,ETHER_ADDR_LEN);
-	eth_addr_parse("ff-ff-ff-ff-ff-ff",tmp);
-	memcpy(&(eh->ether_dhost),tmp,ETHER_ADDR_LEN);
+	eth_addr_parse("ff-ff-ff-ff-ff-ff", (char*)eh->ether_dhost);
 	//src-host-eth-addr
-	memset(tmp,0,ETHER_ADDR_LEN);
-	eth_addr_parse(eth_dst,tmp);
-	memcpy(&(eh->ether_shost),tmp,ETHER_ADDR_LEN);
+	eth_addr_parse(eth_dst, (char*)eh->ether_shost);
 	eh->ether_type=htons(0x0806);
 	arp = (struct ARP_HEADER*)(buff + sizeof(struct ether_header));
 	arp->arp_hdr = htons(1);
@@ -75,18 +71,15 @@ int main(int argc, char **argv) {
 	arp->arp_pln = 0x0004;
 	arp->arp_opt = htons(0x0002);
 
-	memset(tmp,0,ETHER_ADDR_LEN);
-	eth_addr_parse(eth_dst,tmp);
-	memcpy(&(arp->arp_sha),tmp,ETHER_ADDR_LEN);
+	eth_addr_parse(eth_dst, (char*)arp->arp_sha);
 
 	inet_aton(sip,(struct in_addr*)&(arp->arp_spa));
 
-	memset(tmp,0,ETHER_ADDR_LEN);
-	eth_addr_parse("ff-ff-ff-ff-ff-ff",tmp);
-	memcpy(&(arp->arp_tha),tmp,ETHER_ADDR_LEN);
+	eth_addr_parse("ff-ff-ff-ff-ff-ff", (char*)arp->arp_tha);
 
 	inet_aton("0.0.0.0",(struct in_addr*)&(arp->arp_tpa));
 	arp_send(driver, buff, repeat, delay);
+	pcap_close(driver);
 	return 0;
 }
 
